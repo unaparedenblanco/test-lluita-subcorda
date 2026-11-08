@@ -1,0 +1,2242 @@
+<html lang="ca"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TEST - Miguel Castellá</title>
+  <!-- Llibreria per als efectes de confeti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      font-family: 'Press Start 2P', system-ui, -apple-system, sans-serif;
+      background-color: #000;
+      color: #fff;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: #111 center/cover no-repeat;
+      overflow: hidden;
+    }
+
+    /* PANTALLA DE PRESENTACIÓ / INICI */
+    .start-screen {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(8px);
+      z-index: 150;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .start-title {
+      font-size: clamp(2rem, 5vw, 3.8rem);
+      color: #ffcc00;
+      text-shadow: 4px 4px #e74c3c, 8px 8px #000;
+      letter-spacing: 3px;
+      margin-bottom: 2px;
+    }
+
+    .start-subtitle {
+      font-size: clamp(0.8rem, 1.8vw, 1.1rem);
+      color: #38bdf8;
+      text-shadow: 2px 2px #000;
+      margin-bottom: 10px;
+    }
+
+    /* CONTENIDOR D'INSTRUMENTS PRECIOSOS INICI */
+    .gems-tracker-start {
+      background: rgba(15, 23, 42, 0.85);
+      border: 3px solid #ffcc00;
+      border-radius: 12px;
+      padding: 15px;
+      max-width: 550px;
+      width: 100%;
+      margin-bottom: 15px;
+    }
+
+    .gems-tracker-title {
+      font-size: 0.75rem;
+      color: #ffcc00;
+      margin-bottom: 12px;
+    }
+
+    .gems-grid {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .gem-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      opacity: 0.3;
+      filter: grayscale(1);
+      transition: all 0.4s ease;
+    }
+
+    .gem-item.unlocked {
+      opacity: 1;
+      filter: grayscale(0) drop-shadow(0 0 10px rgba(255, 204, 0, 0.8));
+      transform: scale(1.1);
+    }
+
+    .gem-icon {
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+    }
+
+    .gem-name {
+      font-size: 0.6rem;
+      color: #fff;
+    }
+
+    .btn-start-menu {
+      background: #22c55e;
+      color: #fff;
+      border: 3px solid #fff;
+      padding: 14px 28px;
+      font-size: clamp(0.85rem, 1.6vw, 1.1rem);
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 6px 0 #15803d, 0 10px 20px rgba(0,0,0,0.5);
+      transition: all 0.2s;
+      width: 100%;
+      max-width: 320px;
+    }
+    .btn-start-menu:hover {
+      transform: translateY(-2px);
+      background: #16a34a;
+    }
+
+    .btn-start-config {
+      background: #eab308;
+      color: #000;
+      border: 3px solid #fff;
+      padding: 12px 24px;
+      font-size: clamp(0.75rem, 1.3vw, 0.95rem);
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 6px 0 #ca8a04, 0 10px 20px rgba(0,0,0,0.5);
+      transition: all 0.2s;
+      width: 100%;
+      max-width: 320px;
+    }
+    .btn-start-config:hover {
+      transform: translateY(-2px);
+      background: #ca8a04;
+      color: #fff;
+    }
+
+    .btn-reset-gems {
+      background: transparent;
+      border: 1px solid #64748b;
+      color: #94a3b8;
+      padding: 6px 12px;
+      font-size: 0.6rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 5px;
+    }
+    .btn-reset-gems:hover {
+      color: #ef4444;
+      border-color: #ef4444;
+    }
+
+    /* PANTALLA SELECCIÓ D'INSTRUMENT I PERSONATGE */
+    .char-select-screen {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.96);
+      backdrop-filter: blur(8px);
+      z-index: 140;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .select-section-title {
+      font-size: clamp(0.9rem, 2vw, 1.2rem);
+      color: #ffcc00;
+      text-shadow: 2px 2px #000;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .gem-select-grid {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .gem-select-card {
+      background: #1e293b;
+      border: 3px solid #334155;
+      border-radius: 12px;
+      padding: 12px;
+      width: 110px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .gem-select-card:hover:not(.already-unlocked) {
+      border-color: #ffcc00;
+      transform: translateY(-4px);
+    }
+
+    .gem-select-card.selected {
+      border-color: #22c55e;
+      background: #0f172a;
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+    }
+
+    .gem-select-card.already-unlocked {
+      opacity: 0.5;
+      cursor: not-allowed;
+      border-color: #64748b;
+    }
+
+    .char-cards-container {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .char-card {
+      background: #1e293b;
+      border: 3px solid #38bdf8;
+      border-radius: 12px;
+      padding: 15px;
+      width: 170px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .char-card:hover {
+      transform: translateY(-4px);
+      border-color: #ffcc00;
+    }
+
+    .char-card.selected {
+      border-color: #22c55e;
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+    }
+
+    .char-card-avatar {
+      width: 90px;
+      height: 100px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    .char-card-name {
+      font-size: 0.75rem;
+      color: #fff;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .btn-exit-game {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      z-index: 50;
+      background: #ef4444;
+      border: 2px solid #fff;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-family: inherit;
+      box-shadow: 0 4px 0 #991b1b;
+      transition: all 0.2s;
+    }
+    .btn-exit-game:hover {
+      background: #dc2626;
+      transform: translateY(-2px);
+    }
+
+    .btn-config {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      z-index: 50;
+      background: rgba(0,0,0,0.6);
+      border: 2px solid #fff;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .btn-config:hover { background: #ffcc00; color: #000; }
+
+    /* BARRA SUPERIOR D'ESTAT (HUD) */
+    .hud {
+      width: 100%;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+      z-index: 10;
+    }
+
+    .fighter-hud {
+      flex: 1;
+      max-width: 40%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .fighter-hud.right {
+      align-items: flex-end;
+    }
+
+    .fighter-hud-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .fighter-hud.right .fighter-hud-row {
+      flex-direction: row-reverse;
+    }
+
+    .hud-avatar {
+      width: 54px;
+      height: 54px;
+      border: 3px solid #ffcc00;
+      border-radius: 8px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: #1e293b;
+      flex-shrink: 0;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.6);
+    }
+
+    .fighter-info-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .fighter-name {
+      font-size: clamp(0.7rem, 1.8vw, 1.1rem);
+      color: #ffcc00;
+      text-shadow: 2px 2px #000;
+      margin-bottom: 5px;
+      font-weight: bold;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .health-bar-container {
+      width: 100%;
+      height: 24px;
+      background: #333;
+      border: 3px solid #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.8);
+      position: relative;
+      overflow: hidden;
+      border-radius: 4px;
+    }
+
+    .health-bar {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(180deg, #2ecc71, #27ae60);
+      transition: width 0.8s ease-out, background 0.8s ease;
+    }
+
+    .health-bar.yellow { background: linear-gradient(180deg, #f1c40f, #f39c12); }
+    .health-bar.red { background: linear-gradient(180deg, #e74c3c, #c0392b); }
+
+    .health-bar-container.right .health-bar {
+      float: right;
+    }
+
+    .timer-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0 10px;
+    }
+
+    .timer-box {
+      background: #e74c3c;
+      border: 3px solid #fff;
+      color: #fff;
+      font-size: clamp(0.9rem, 2vw, 1.5rem);
+      padding: 4px 10px;
+      border-radius: 6px;
+      box-shadow: 0 4px 0 #900;
+    }
+
+    .combo-badge {
+      font-size: 0.65rem;
+      color: #38bdf8;
+      margin-top: 4px;
+      font-weight: bold;
+      text-shadow: 1px 1px #000;
+    }
+
+    /* CONTENIDOR D'INSTRUMENTS EN COMBAT (HUD) */
+    .hud-gems-bar {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 4px 8px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .hud-gem-slot {
+      font-size: clamp(1rem, 2vw, 1.4rem);
+      opacity: 0.25;
+      filter: grayscale(1);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hud-gem-slot.unlocked {
+      opacity: 1;
+      filter: grayscale(0) drop-shadow(0 0 6px rgba(255, 255, 255, 0.8));
+    }
+
+    .hud-gem-slot.current-target {
+      opacity: 1;
+      filter: grayscale(0);
+      animation: pulseTargetGem 1.2s infinite alternate;
+    }
+
+    @keyframes pulseTargetGem {
+      0% { transform: scale(1); filter: drop-shadow(0 0 2px #fff); }
+      100% { transform: scale(1.3); filter: drop-shadow(0 0 12px #ffcc00); }
+    }
+
+    /* ESCENARI DE COMBAT */
+    .stage {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 0 10%;
+      padding-bottom: 2dvh;
+    }
+
+    .character {
+      width: clamp(150px, 25vw, 320px);
+      height: clamp(180px, 45dvh, 400px);
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: bottom center;
+      transition: transform 0.8s ease;
+      filter: drop-shadow(0 10px 15px rgba(0,0,0,0.7));
+      position: relative;
+    }
+
+    .attack-p1 { animation: animAttackP1 1s cubic-bezier(0.25, 1, 0.5, 1); }
+    .super-attack-p1 { animation: animSuperAttackP1 1.2s cubic-bezier(0.25, 1, 0.5, 1); }
+    .attack-p2 { animation: animAttackP2 1s cubic-bezier(0.25, 1, 0.5, 1); }
+    .hit { animation: animHit 0.8s ease-in-out; }
+
+    @keyframes animAttackP1 {
+      0% { transform: translateX(0); }
+      50% { transform: translateX(140px) scale(1.15); }
+      100% { transform: translateX(0); }
+    }
+
+    @keyframes animSuperAttackP1 {
+      0% { transform: translateX(0); }
+      20% { transform: translateX(-30px) scale(0.9); filter: brightness(2) drop-shadow(0 0 20px #ffcc00); }
+      60% { transform: translateX(220px) scale(1.3); filter: brightness(3) drop-shadow(0 0 30px #38bdf8); }
+      100% { transform: translateX(0); }
+    }
+
+    @keyframes animAttackP2 {
+      0% { transform: translateX(0); }
+      50% { transform: translateX(-140px) scale(1.15); }
+      100% { transform: translateX(0); }
+    }
+
+    @keyframes animHit {
+      0% { filter: brightness(1) drop-shadow(0 10px 15px rgba(0,0,0,0.7)); }
+      25% { filter: brightness(4) sepia(1) hue-rotate(-50deg); transform: translateX(-15px) rotate(-5deg); }
+      50% { filter: brightness(5) sepia(1) hue-rotate(-50deg); transform: translateX(15px) rotate(5deg); }
+      75% { filter: brightness(3) sepia(1); transform: translateX(-5px); }
+      100% { filter: brightness(1) drop-shadow(0 10px 15px rgba(0,0,0,0.7)); transform: translateX(0); }
+    }
+
+    .floating-text {
+      position: absolute;
+      top: 20%;
+      font-size: clamp(1rem, 2.5vw, 1.8rem);
+      font-weight: bold;
+      text-shadow: 3px 3px 0 #000, -2px -2px 0 #000;
+      pointer-events: none;
+      z-index: 120;
+      animation: floatUp 1.4s ease-out forwards;
+    }
+
+    @keyframes floatUp {
+      0% { opacity: 0; transform: translateY(20px) scale(0.6); }
+      20% { opacity: 1; transform: translateY(-10px) scale(1.2); }
+      80% { opacity: 1; transform: translateY(-40px) scale(1); }
+      100% { opacity: 0; transform: translateY(-70px) scale(0.8); }
+    }
+
+    /* MODAL POP-UP PREGUNTA */
+    .modal-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(4px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .modal-quiz {
+      background: rgba(15, 23, 42, 0.95);
+      border: 4px solid #ffcc00;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 680px;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 20px rgba(255, 204, 0, 0.3);
+      animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .quiz-timer-bar-bg {
+      width: 100%;
+      height: 8px;
+      background: #334155;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .quiz-timer-bar {
+      height: 100%;
+      width: 100%;
+      background: #22c55e;
+      transition: width 0.1s linear, background-color 0.3s;
+    }
+
+    .question-title {
+      font-size: clamp(0.9rem, 1.8vw, 1.2rem);
+      line-height: 1.5;
+      color: #fff;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .question-image-container {
+      width: 100%;
+      max-height: 180px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .question-image {
+      max-width: 100%;
+      max-height: 180px;
+      border-radius: 8px;
+      border: 2px solid #38bdf8;
+      object-fit: contain;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .options-grid { grid-template-columns: 1fr; }
+    }
+
+    .option-btn {
+      background: #1e293b;
+      border: 2px solid #38bdf8;
+      color: #fff;
+      padding: 14px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: clamp(0.75rem, 1.4vw, 0.9rem);
+      text-align: left;
+      transition: all 0.2s;
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .option-btn:hover {
+      background: #38bdf8;
+      color: #0f172a;
+      transform: translateY(-2px);
+    }
+
+    .option-btn.correct-feedback {
+      background: #22c55e !important;
+      border-color: #fff !important;
+      color: #fff !important;
+      animation: pulseGreen 0.6s infinite alternate;
+    }
+
+    .option-btn.wrong-feedback {
+      background: #ef4444 !important;
+      border-color: #7f1d1d !important;
+      opacity: 0.7;
+    }
+
+    @keyframes pulseGreen {
+      from { transform: scale(1); }
+      to { transform: scale(1.03); }
+    }
+
+    .feedback-msg {
+      margin-top: 15px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #ef4444;
+      font-weight: bold;
+    }
+
+    .option-letter {
+      font-weight: bold;
+      padding: 4px 9px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      color: #fff;
+    }
+    .letra-A { background-color: #e74c3c; }
+    .letra-B { background-color: #3b82f6; }
+    .letra-C { background-color: #22c55e; }
+    .letra-D { background-color: #eab308; color: #000; }
+
+    /* PANTALLA DE RESULTATS FINALS */
+    .results-screen {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 180;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .results-card {
+      background: #1e293b;
+      border: 4px solid #ffcc00;
+      border-radius: 16px;
+      padding: 25px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .results-title {
+      font-size: clamp(1.4rem, 3.2vw, 2rem);
+      text-shadow: 3px 3px #000;
+    }
+    .results-title.win { color: #22c55e; }
+    .results-title.lose { color: #ef4444; }
+
+    .gem-unlocked-banner {
+      background: rgba(255, 204, 0, 0.15);
+      border: 2px dashed #ffcc00;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 0.85rem;
+      color: #ffcc00;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .stats-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #0f172a;
+      padding: 12px;
+      border-radius: 8px;
+      text-align: left;
+      font-size: 0.75rem;
+      line-height: 1.5;
+    }
+
+    /* PANELL DE CONFIGURACIÓ */
+    .config-modal {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.92);
+      z-index: 200;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .config-container {
+      width: 100%;
+      max-width: 750px;
+      background: #1e293b;
+      border: 3px solid #ffcc00;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      max-height: 90vh;
+    }
+
+    .config-tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #334155;
+      padding-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      flex: 1;
+      min-width: 110px;
+      padding: 8px;
+      background: #0f172a;
+      border: 1px solid #475569;
+      color: #94a3b8;
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 0.65rem;
+      text-align: center;
+    }
+
+    .tab-btn.active {
+      background: #ffcc00;
+      color: #000;
+      font-weight: bold;
+      border-color: #ffcc00;
+    }
+
+    .tab-content {
+      display: none;
+      flex-direction: column;
+      gap: 15px;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+    .tab-content.active { display: flex; }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 0.8rem;
+      color: #ffcc00;
+    }
+
+    .form-control {
+      padding: 10px;
+      background: #0f172a;
+      border: 1px solid #475569;
+      color: #fff;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-family: inherit;
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    .btn-action {
+      background: #22c55e;
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.85rem;
+      transition: background 0.2s;
+    }
+    .btn-action:hover { background: #16a34a; }
+
+    .btn-close {
+      background: #ef4444;
+      margin-top: 15px;
+    }
+    .btn-close:hover { background: #dc2626; }
+
+    .q-item {
+      background: #0f172a;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+    }
+
+    .q-item button {
+      background: #ef4444;
+      border: none;
+      color: white;
+      padding: 5px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    /* MODAL PIN DE SEGURETAT */
+    .pin-modal {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(5px);
+      z-index: 250;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .pin-container {
+      background: #1e293b;
+      border: 3px solid #ffcc00;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .pin-title {
+      font-size: 1rem;
+      color: #ffcc00;
+    }
+
+    .pin-input {
+      font-size: 1.5rem;
+      letter-spacing: 12px;
+      text-align: center;
+      padding: 10px;
+      background: #0f172a;
+      border: 2px solid #38bdf8;
+      color: #fff;
+      border-radius: 8px;
+      font-family: monospace;
+      outline: none;
+    }
+
+    .pin-error {
+      color: #ef4444;
+      font-size: 0.75rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="game-container" style="background-image: url(&quot;https://static.wixstatic.com/media/a6e1f9_407ee07e748141f993789f72ca4b6c53~mv2.jpg/v1/fill/w_354,h_194,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_407ee07e748141f993789f72ca4b6c53~mv2.jpg&quot;);">
+    <button class="btn-exit-game" id="btn-exit-game" onclick="exitToStartScreen()" style="display: block;">❌ SORTIR</button>
+    <button class="btn-config" id="btn-main-config" onclick="requestConfigAccess()" style="display: block;">⚙️ CONFIG</button>
+
+    <!-- PANTALLA DE PRESENTACIÓ -->
+    <div class="start-screen" id="start-screen" style="display: flex;">
+      <div class="start-title">TEST</div>
+      <div class="start-subtitle">Miguel Castellá</div>
+
+      <!-- SEGUIMENT DELS 4 INSTRUMENTS INICI -->
+      <div class="gems-tracker-start">
+        <div class="gems-tracker-title">🎵 EL REPTE DELS 4 INSTRUMENTS:</div>
+        <div class="gems-grid" id="gems-tracker-grid"><div class="gem-item ">
+          <div class="gem-icon">🎸</div>
+          <div class="gem-name">Guitarra</div>
+        </div><div class="gem-item ">
+          <div class="gem-icon">🎹</div>
+          <div class="gem-name">Piano</div>
+        </div><div class="gem-item ">
+          <div class="gem-icon">🎺</div>
+          <div class="gem-name">Trompeta</div>
+        </div><div class="gem-item ">
+          <div class="gem-icon">🥁</div>
+          <div class="gem-name">Bateria</div>
+        </div></div>
+        <button class="btn-reset-gems" onclick="resetGemsProgress()">🔄 Reiniciar Instruments</button>
+      </div>
+
+      <button class="btn-start-menu" onclick="openCharSelect()">⚔️ COMENCAR COMBAT</button>
+      <button class="btn-start-config" onclick="requestConfigAccessFromStart()">⚙️ CONFIGURACIÓ</button>
+    </div>
+
+    <!-- PANTALLA SELECCIÓ D'INSTRUMENT I PERSONATGE -->
+    <div class="char-select-screen" id="char-select-screen" style="display: none;">
+      <div class="select-section-title">1. TRIA L'INSTRUMENT PER AQUEST COMBAT</div>
+      <div class="gem-select-grid" id="gem-select-container"><div class="gem-select-card selected">
+          <div style="font-size: 2rem;">🎸</div>
+          <div style="font-size: 0.7rem; color: #fff; font-weight: bold;">Guitarra</div>
+          <div style="font-size: 0.55rem; color: #ffcc00;">
+            PENDENT 🔒
+          </div>
+        </div><div class="gem-select-card">
+          <div style="font-size: 2rem;">🎹</div>
+          <div style="font-size: 0.7rem; color: #fff; font-weight: bold;">Piano</div>
+          <div style="font-size: 0.55rem; color: #ffcc00;">
+            PENDENT 🔒
+          </div>
+        </div><div class="gem-select-card">
+          <div style="font-size: 2rem;">🎺</div>
+          <div style="font-size: 0.7rem; color: #fff; font-weight: bold;">Trompeta</div>
+          <div style="font-size: 0.55rem; color: #ffcc00;">
+            PENDENT 🔒
+          </div>
+        </div><div class="gem-select-card">
+          <div style="font-size: 2rem;">🥁</div>
+          <div style="font-size: 0.7rem; color: #fff; font-weight: bold;">Bateria</div>
+          <div style="font-size: 0.55rem; color: #ffcc00;">
+            PENDENT 🔒
+          </div>
+        </div></div>
+
+      <div class="select-section-title">2. TRIA EL TEU PERSONATGE</div>
+      <div class="char-cards-container">
+        <div class="char-card selected" id="card-p1a" onclick="selectFighter(1)">
+          <div class="char-card-avatar" id="select-avatar-p1a" style="background-image: url(&quot;https://static.wixstatic.com/media/a6e1f9_5608bae9c03544469f61f6ee1294cdff~mv2.png/v1/fill/w_352,h_408,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_5608bae9c03544469f61f6ee1294cdff~mv2.png&quot;);"></div>
+          <div class="char-card-name" id="select-name-p1a">Mario</div>
+        </div>
+        <div class="char-card" id="card-p1b" onclick="selectFighter(2)">
+          <div class="char-card-avatar" id="select-avatar-p1b" style="background-image: url(&quot;https://static.wixstatic.com/media/a6e1f9_5e852be276534451b609f7da0af50c02~mv2.png/v1/fill/w_338,h_448,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_5e852be276534451b609f7da0af50c02~mv2.png&quot;);"></div>
+          <div class="char-card-name" id="select-name-p1b">Luigi</div>
+        </div>
+      </div>
+
+      <button class="btn-start-menu" style="margin-top: 10px;" onclick="confirmSelectionAndStart()">🔥 ENTRAR AL COMBAT</button>
+    </div>
+
+    <!-- HUD BARRES DE VIDA -->
+    <div class="hud">
+      <div class="fighter-hud">
+        <div class="fighter-name" id="name-p1">Princesa Peach</div>
+        <div class="fighter-hud-row">
+          <div class="hud-avatar" id="hud-avatar-p1" style="background-image: url(&quot;https://static.wixstatic.com/media/a6e1f9_5363adf839a547a8987e41f2bccc5605~mv2.png/v1/fill/w_352,h_420,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_5363adf839a547a8987e41f2bccc5605~mv2.png&quot;);"></div>
+          <div class="fighter-info-col">
+            <div class="health-bar-container">
+              <div class="health-bar" id="hp-p1" style="width: 100%;"></div>
+            </div>
+            <div class="combo-badge" id="combo-count">RUA: 0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="timer-container">
+        <div class="timer-box" id="match-timer">VS</div>
+        <!-- 4 INSTRUMENTS DINS LA PANTALLA DE BATALLA (HUD) -->
+        <div class="hud-gems-bar" id="hud-gems-bar"><div class="hud-gem-slot" title="Guitarra: Pendent">🎸</div><div class="hud-gem-slot" title="Piano: Pendent">🎹</div><div class="hud-gem-slot" title="Trompeta: Pendent">🎺</div><div class="hud-gem-slot" title="Bateria: Pendent">🥁</div></div>
+      </div>
+
+      <div class="fighter-hud right">
+        <div class="fighter-name" id="name-p2">Wario</div>
+        <div class="fighter-hud-row">
+          <div class="hud-avatar" id="hud-avatar-p2" style="background-image: url(&quot;https://static.wixstatic.com/media/a6e1f9_809166c957114bb9872adaef4fd87c8e~mv2.png/v1/fill/w_352,h_322,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_809166c957114bb9872adaef4fd87c8e~mv2.png&quot;);"></div>
+          <div class="fighter-info-col">
+            <div class="health-bar-container right">
+              <div class="health-bar" id="hp-p2" style="width: 100%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ESCENARI DE LLUITA -->
+    <div class="stage" id="stage-area">
+      <div class="character" id="char-p1" style="background-image: url(&quot;https://static.wixstatic.com/media/a6e1f9_5363adf839a547a8987e41f2bccc5605~mv2.png/v1/fill/w_352,h_420,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_5363adf839a547a8987e41f2bccc5605~mv2.png&quot;);"></div>
+      <div class="character" id="char-p2" style="background-image: url(&quot;https://static.wixstatic.com/media/a6e1f9_809166c957114bb9872adaef4fd87c8e~mv2.png/v1/fill/w_352,h_322,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_809166c957114bb9872adaef4fd87c8e~mv2.png&quot;);"></div>
+    </div>
+
+    <!-- MODAL POP-UP PREGUNTA -->
+    <div class="modal-overlay" id="quiz-modal" style="display: none;">
+      <div class="modal-quiz">
+        <div class="quiz-timer-bar-bg">
+          <div class="quiz-timer-bar" id="quiz-timer-bar"></div>
+        </div>
+        <div class="question-title" id="quiz-question">Carregant pregunta...</div>
+        <div class="question-image-container" id="quiz-img-container" style="display: none;">
+          <img id="quiz-question-img" class="question-image" src="" alt="Imatge de la pregunta">
+        </div>
+        <div class="options-grid" id="quiz-options"></div>
+        <div class="feedback-msg" id="feedback-msg" style="display: none;"></div>
+      </div>
+    </div>
+
+    <!-- PANTALLA DE RESULTATS FINALS -->
+    <div class="results-screen" id="results-screen" style="display: none;">
+      <div class="results-card">
+        <div class="results-title" id="results-title">VICTÒRIA!</div>
+        
+        <div class="gem-unlocked-banner" id="gem-unlocked-banner">
+          <span style="font-size: 1.8rem;" id="banner-gem-icon">🎸</span>
+          <span id="banner-gem-text">Has aconseguit la Guitarra!</span>
+        </div>
+
+        <div class="stats-grid">
+          <div>🎯 Encerts: <b id="stat-correct" style="color: #22c55e;">0</b></div>
+          <div>❌ Fallades: <b id="stat-wrong" style="color: #ef4444;">0</b></div>
+          <div>📊 Precisió: <b id="stat-accuracy" style="color: #38bdf8;">0%</b></div>
+          <div>🔥 Màxima Rua: <b id="stat-maxcombo" style="color: #ffcc00;">0</b></div>
+          <div>⏱️ Temps Total: <b id="stat-time" style="color: #fff;">0s</b></div>
+        </div>
+        <button class="btn-action" onclick="exitToStartScreen()">🔄 TORNAR A L'INICI</button>
+      </div>
+    </div>
+
+    <!-- MODAL PIN CONFIGURACIÓ -->
+    <div class="pin-modal" id="pin-modal" style="display: none;">
+      <div class="pin-container">
+        <div class="pin-title">🔒 ACCÉS A CONFIGURACIÓ</div>
+        <p style="font-size: 0.7rem; color: #94a3b8;">Introdueix la contrasenya de 4 xifres:</p>
+        <input type="password" id="pin-input" class="pin-input" maxlength="4" placeholder="••••" autocomplete="off" onkeyup="if(event.key==='Enter') verifyPin()">
+        <div class="pin-error" id="pin-error" style="display: none;">❌ Contrasenya incorrecta</div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-action" style="flex: 1; background: #22c55e;" onclick="verifyPin()">OK</button>
+          <button class="btn-action" style="flex: 1; background: #ef4444;" onclick="closePinModal()">CANCEL·LAR</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANELL DE CONFIGURACIÓ -->
+    <div class="config-modal" id="config-modal" style="display: flex;">
+      <div class="config-container">
+        <div class="config-tabs">
+          <button class="tab-btn active" onclick="switchTab(1)">1. DESAR/CARREGAR</button>
+          <button class="tab-btn" onclick="switchTab(2)">2. PERSONATGES</button>
+          <button class="tab-btn" onclick="switchTab(3)">3. DANY COMBAT</button>
+          <button class="tab-btn" onclick="switchTab(4)">4. PREGUNTES</button>
+        </div>
+
+        <div class="tab-content active" id="tab-1">
+          <div class="form-group" style="background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #38bdf8; gap: 12px;">
+            <label style="color: #38bdf8; font-size: 0.9rem;">💾 Gestió de Fitxers de Configuració:</label>
+            <p style="font-size: 0.75rem; color: #94a3b8; line-height: 1.4;">Pots guardar tots els teus ajustos, preguntes i personatges en un fitxer JSON o descarregar l'aplicació HTML sencera ja configurada.</p>
+            <button class="btn-action" style="background: #2563eb;" onclick="exportConfigJson()">📥 Descarregar Fitxer de Configuració (JSON)</button>
+            <button class="btn-action" style="background: #d97706; margin-top: 4px;" onclick="exportStandaloneHtml()">🌐 Descarregar Aplicació HTML Autònoma</button>
+            <div style="margin-top: 10px;">
+              <label style="font-size: 0.75rem; color: #ffcc00; display: block; margin-bottom: 5px;">Carregar fitxer JSON guardat:</label>
+              <input type="file" accept=".json" class="form-control" onchange="importConfigJson(event)">
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-2">
+          <div class="form-group">
+            <label>Nom Personatge 1A:</label>
+            <input type="text" id="cfg-name-p1a" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Imatge Personatge 1A (URL o fitxer):</label>
+            <input type="text" id="cfg-img-p1a" class="form-control">
+            <input type="file" accept="image/*" onchange="uploadImg(event, 'cfg-img-p1a')">
+          </div>
+          <hr style="border-color: #334155; margin: 10px 0;">
+          <div class="form-group">
+            <label>Nom Personatge 1B (Segon Personatge Alumne):</label>
+            <input type="text" id="cfg-name-p1b" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Imatge Personatge 1B (URL o fitxer):</label>
+            <input type="text" id="cfg-img-p1b" class="form-control">
+            <input type="file" accept="image/*" onchange="uploadImg(event, 'cfg-img-p1b')">
+          </div>
+          <hr style="border-color: #334155; margin: 10px 0;">
+          <div class="form-group">
+            <label>Nom Oponent:</label>
+            <input type="text" id="cfg-name-p2" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Imatge Oponent (URL o fitxer):</label>
+            <input type="text" id="cfg-img-p2" class="form-control">
+            <input type="file" accept="image/*" onchange="uploadImg(event, 'cfg-img-p2')">
+          </div>
+          <hr style="border-color: #334155; margin: 10px 0;">
+          <div class="form-group">
+            <label>Imatge de Fons Escenari (URL o fitxer):</label>
+            <input type="text" id="cfg-bg-img" class="form-control">
+            <input type="file" accept="image/*" onchange="uploadImg(event, 'cfg-bg-img')">
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-3">
+          <div class="form-group">
+            <label>Dany que fas en encertar una pregunta normal (HP):</label>
+            <input type="number" id="cfg-damage-deal" class="form-control" min="5" max="100">
+          </div>
+          <div class="form-group">
+            <label>Dany del SUPER COMBO en rua de 5 encerts (HP):</label>
+            <input type="number" id="cfg-damage-super" class="form-control" min="10" max="100">
+          </div>
+          <div class="form-group">
+            <label>Dany que et fan en fallar/esgotar temps (HP):</label>
+            <input type="number" id="cfg-damage-receive" class="form-control" min="5" max="100">
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-4">
+          <div class="form-group" style="background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #38bdf8;">
+            <label style="color: #38bdf8;">📋 Importar Preguntes en Bloc (Copiar i Enganxar):</label>
+            <textarea id="bulk-import-text" class="form-control" placeholder="Exemple de format:
+Quina és la capital de Catalunya?
+[IMG: https://exemple.com/mapa.jpg]
+*A) Barcelona
+B) Girona
+C) Lleida
+D) Tarragona
+
+(Posa un asterisc * davant de la resposta correcta. Pots incloure [IMG: URL] opcionalment)"></textarea>
+            <button class="btn-action" style="margin-top: 8px; background: #0284c7;" onclick="importBulkQuestions()">📥 IMPORTAR TEXT</button>
+          </div>
+          <hr style="border-color: #334155; margin: 10px 0;">
+          <div class="form-group">
+            <label>Afegir una pregunta manualment:</label>
+            <input type="text" id="new-q-text" class="form-control" placeholder="Text de la pregunta">
+          </div>
+          <div class="form-group">
+            <label>Imatge de la pregunta (URL o fitxer) *opcional:</label>
+            <input type="text" id="new-q-img" class="form-control" placeholder="https://exemple.com/imatge.png">
+            <input type="file" accept="image/*" onchange="uploadImg(event, 'new-q-img')">
+          </div>
+          <div class="form-group">
+            <label>Opció A (Correcta) *obligatòria:</label>
+            <input type="text" id="new-q-opt0" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Opció B (Incorrecta) *obligatòria:</label>
+            <input type="text" id="new-q-opt1" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Opció C (Incorrecta) *opcional:</label>
+            <input type="text" id="new-q-opt2" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Opció D (Incorrecta) *opcional:</label>
+            <input type="text" id="new-q-opt3" class="form-control">
+          </div>
+          <button class="btn-action" onclick="addQuestion()">+ AFEGIR PREGUNTA</button>
+          <label style="color: #ffcc00; font-size: 0.8rem; margin-top: 15px;">Llista de Preguntes Actuals:</label>
+          <div id="questions-list" style="display: flex; flex-direction: column; gap: 8px;"><div class="q-item">
+          <span><b>1.</b> Subfamília de l’instrument de la imatge. 🖼️ <i>(3 opcions)</i></span>
+          <button onclick="removeQuestion(0)">🗑️ Esborrar</button>
+        </div><div class="q-item">
+          <span><b>2.</b> Subfamília de l’instrument de la imatge. 🖼️ <i>(3 opcions)</i></span>
+          <button onclick="removeQuestion(1)">🗑️ Esborrar</button>
+        </div><div class="q-item">
+          <span><b>3.</b> Subfamília de l’instrument de la imatge. 🖼️ <i>(3 opcions)</i></span>
+          <button onclick="removeQuestion(2)">🗑️ Esborrar</button>
+        </div><div class="q-item">
+          <span><b>4.</b> Subfamília de l’instrument de la imatge. 🖼️ <i>(3 opcions)</i></span>
+          <button onclick="removeQuestion(3)">🗑️ Esborrar</button>
+        </div><div class="q-item">
+          <span><b>5.</b> Subfamília de l’instrument de la imatge. 🖼️ <i>(3 opcions)</i></span>
+          <button onclick="removeQuestion(4)">🗑️ Esborrar</button>
+        </div><div class="q-item">
+          <span><b>6.</b> Subfamília de l’instrument de la imatge. 🖼️ <i>(3 opcions)</i></span>
+          <button onclick="removeQuestion(5)">🗑️ Esborrar</button>
+        </div><div class="q-item">
+          <span><b>7.</b> Subfamília de l’instrument de la imatge. 🖼️ <i>(3 opcions)</i></span>
+          <button onclick="removeQuestion(6)">🗑️ Esborrar</button>
+        </div><div class="q-item">
+          <span><b>8.</b> Subfamília de l’instrument de la imatge. 🖼️ <i>(3 opcions)</i></span>
+          <button onclick="removeQuestion(7)">🗑️ Esborrar</button>
+        </div><div class="q-item">
+          <span><b>9.</b> Subfamília de l’instrument de la imatge. 🖼️ <i>(3 opcions)</i></span>
+          <button onclick="removeQuestion(8)">🗑️ Esborrar</button>
+        </div><div class="q-item">
+          <span><b>10.</b> Subfamília de l’instrument de la imatge. 🖼️ <i>(3 opcions)</i></span>
+          <button onclick="removeQuestion(9)">🗑️ Esborrar</button>
+        </div><div class="q-item">
+          <span><b>11.</b> Subfamília de l’instrument de la imatge. 🖼️ <i>(3 opcions)</i></span>
+          <button onclick="removeQuestion(10)">🗑️ Esborrar</button>
+        </div></div>
+        </div>
+
+        <button class="btn-action" style="margin-top: 15px;" onclick="saveConfig()">GUARDAR I APLICAR</button>
+        <button class="btn-action btn-close" onclick="closeConfig()">CANCEL·LAR</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CONFIG_PIN = "0402";
+
+    // DADES DELS 4 INSTRUMENTS MUSICALS
+    const GEM_TYPES = [
+      { id: 'guitarra', name: 'Guitarra', icon: '🎸', color: '#ef4444' },
+      { id: 'piano', name: 'Piano', icon: '🎹', color: '#3b82f6' },
+      { id: 'trompeta', name: 'Trompeta', icon: '🎺', color: '#eab308' },
+      { id: 'bateria', name: 'Bateria', icon: '🥁', color: '#22c55e' }
+    ];
+
+    // DADES PER DEFECTE
+    const defaultState = {
+  "p1aName": "Princesa Peach",
+  "p1aImg": "https://static.wixstatic.com/media/a6e1f9_5363adf839a547a8987e41f2bccc5605~mv2.png/v1/fill/w_352,h_420,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_5363adf839a547a8987e41f2bccc5605~mv2.png",
+  "p1bName": "Yoshi",
+  "p1bImg": "https://static.wixstatic.com/media/a6e1f9_21d2e4b653aa409facc8104f355881d2~mv2.png/v1/fill/w_352,h_318,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_21d2e4b653aa409facc8104f355881d2~mv2.png",
+  "bgImg": "https://static.wixstatic.com/media/a6e1f9_407ee07e748141f993789f72ca4b6c53~mv2.jpg/v1/fill/w_354,h_194,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_407ee07e748141f993789f72ca4b6c53~mv2.jpg",
+  "questions": [
+    {
+      "q": "Subfamília de l’instrument de la imatge.",
+      "options": [
+        "Corda fregada",
+        "Corda polsada",
+        "Corda percudida"
+      ],
+      "correct": 0,
+      "img": "https://static.wixstatic.com/media/a6e1f9_737684c8dd3a460689484737b388cb45~mv2.png/v1/fill/w_240,h_240,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_737684c8dd3a460689484737b388cb45~mv2.png"
+    },
+    {
+      "q": "Subfamília de l’instrument de la imatge.",
+      "options": [
+        "Corda fregada",
+        "Corda polsada",
+        "Corda percudida"
+      ],
+      "correct": 0,
+      "img": "https://static.wixstatic.com/media/a6e1f9_c6ff55fa101e4cdda35aa8d3e985e353~mv2.png/v1/fill/w_240,h_240,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_c6ff55fa101e4cdda35aa8d3e985e353~mv2.png"
+    },
+    {
+      "q": "Subfamília de l’instrument de la imatge.",
+      "options": [
+        "Corda fregada",
+        "Corda polsada",
+        "Corda percudida"
+      ],
+      "correct": 0,
+      "img": "https://static.wixstatic.com/media/a6e1f9_8890b00233dc44b7b374c8d494225cd6~mv2.png/v1/fill/w_240,h_240,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_8890b00233dc44b7b374c8d494225cd6~mv2.png"
+    },
+    {
+      "q": "Subfamília de l’instrument de la imatge.",
+      "options": [
+        "Corda fregada",
+        "Corda polsada",
+        "Corda percudida"
+      ],
+      "correct": 0,
+      "img": "https://static.wixstatic.com/media/a6e1f9_16a9af94b59d478c8d0c758b0ad2f08d~mv2.png/v1/fill/w_240,h_240,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_16a9af94b59d478c8d0c758b0ad2f08d~mv2.png"
+    },
+    {
+      "q": "Subfamília de l’instrument de la imatge.",
+      "options": [
+        "Corda percudida",
+        "Corda fregada",
+        "Corda polsada"
+      ],
+      "correct": 0,
+      "img": "https://static.wixstatic.com/media/a6e1f9_a9f5839d027c4069939565dbee8c13ef~mv2.png/v1/fill/w_240,h_240,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_a9f5839d027c4069939565dbee8c13ef~mv2.png"
+    },
+    {
+      "q": "Subfamília de l’instrument de la imatge.",
+      "options": [
+        "Corda percudida",
+        "Corda fregada",
+        "Corda polsada"
+      ],
+      "correct": 0,
+      "img": "https://static.wixstatic.com/media/a6e1f9_cd09ff001a25480e90f10f616729ac41~mv2.png/v1/fill/w_240,h_240,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_cd09ff001a25480e90f10f616729ac41~mv2.png"
+    },
+    {
+      "q": "Subfamília de l’instrument de la imatge.",
+      "options": [
+        "Corda polsada",
+        "Corda percudida",
+        "Corda fregada"
+      ],
+      "correct": 0,
+      "img": "https://static.wixstatic.com/media/a6e1f9_337b1db15a704f28bcdc635f9cec785d~mv2.png/v1/fill/w_240,h_240,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_337b1db15a704f28bcdc635f9cec785d~mv2.png"
+    },
+    {
+      "q": "Subfamília de l’instrument de la imatge.",
+      "options": [
+        "Corda polsada",
+        "Corda percudida",
+        "Corda fregada"
+      ],
+      "correct": 0,
+      "img": "https://static.wixstatic.com/media/a6e1f9_f2ea84a3f003417e9f3fc306cfcc46fe~mv2.png/v1/fill/w_240,h_240,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_f2ea84a3f003417e9f3fc306cfcc46fe~mv2.png"
+    },
+    {
+      "q": "Subfamília de l’instrument de la imatge.",
+      "options": [
+        "Corda polsada",
+        "Corda percudida",
+        "Corda fregada"
+      ],
+      "correct": 0,
+      "img": "https://static.wixstatic.com/media/a6e1f9_2633fabd1cfd4d72b909fe176e516c47~mv2.png/v1/fill/w_240,h_240,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_2633fabd1cfd4d72b909fe176e516c47~mv2.png"
+    },
+    {
+      "q": "Subfamília de l’instrument de la imatge.",
+      "options": [
+        "Corda polsada",
+        "Corda percudida",
+        "Corda fregada"
+      ],
+      "correct": 0,
+      "img": "https://static.wixstatic.com/media/a6e1f9_ba801a1203f14a52b4d7baed74597c41~mv2.png/v1/fill/w_240,h_240,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_ba801a1203f14a52b4d7baed74597c41~mv2.png"
+    },
+    {
+      "q": "Subfamília de l’instrument de la imatge.",
+      "options": [
+        "Corda polsada",
+        "Corda percudida",
+        "Corda fregada"
+      ],
+      "correct": 0,
+      "img": "https://static.wixstatic.com/media/a6e1f9_d86b8ac509544a419b03eb8432f889f6~mv2.png/v1/fill/w_240,h_240,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_d86b8ac509544a419b03eb8432f889f6~mv2.png"
+    }
+  ],
+  "p2Name": "Wario",
+  "p2Img": "https://static.wixstatic.com/media/a6e1f9_809166c957114bb9872adaef4fd87c8e~mv2.png/v1/fill/w_352,h_322,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_809166c957114bb9872adaef4fd87c8e~mv2.png",
+  "damageDeal": 10,
+  "damageSuper": 15,
+  "damageReceive": 15
+};
+
+    let state = defaultState;
+    let unlockedGems = JSON.parse(localStorage.getItem('quiz_fighter_gems')) || [];
+
+    let selectedGemId = null;
+    let selectedPlayerOption = 1;
+    let selectedPlayerName = state.p1aName;
+    let selectedPlayerImg = state.p1aImg;
+
+    let hpP1 = 100;
+    let hpP2 = 100;
+    let currentQIndex = 0;
+    let quizTimer = null;
+    let timeLeft = 15;
+    let openedFromStartScreen = false;
+    let isProcessingAnswer = false;
+
+    let comboStreak = 0;
+    let maxCombo = 0;
+    let countCorrect = 0;
+    let countWrong = 0;
+    let matchStartTime = 0;
+
+    const letters = ["A", "B", "C", "D"];
+    const letterClasses = ["letra-A", "letra-B", "letra-C", "letra-D"];
+
+    // CONFETI EN LA VICTÒRIA DE COMBAT
+    function triggerWinConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }
+    }
+
+    // CELEBRACIÓ ESPECIAL QUAN S'ACONSEGUEIXEN ELS 4 INSTRUMENTS
+    function triggerAllGemsSuperCelebration() {
+      if (typeof confetti === 'function') {
+        const duration = 4 * 1000;
+        const animationEnd = Date.now() + duration;
+        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 300 };
+
+        function randomInRange(min, max) {
+          return Math.random() * (max - min) + min;
+        }
+
+        const interval = setInterval(function() {
+          const timeLeft = animationEnd - Date.now();
+
+          if (timeLeft <= 0) {
+            return clearInterval(interval);
+          }
+
+          const particleCount = 50 * (timeLeft / duration);
+
+          confetti(Object.assign({}, defaults, { 
+            particleCount, 
+            origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+            colors: ['#ffcc00', '#22c55e', '#38bdf8', '#ef4444']
+          }));
+          confetti(Object.assign({}, defaults, { 
+            particleCount, 
+            origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+            colors: ['#ffcc00', '#22c55e', '#38bdf8', '#ef4444']
+          }));
+        }, 250);
+      }
+    }
+
+    // SO (WEB AUDIO API)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      if (type === 'joyful') {
+        const now = audioCtx.currentTime;
+        osc.type = 'triangle';
+        gain.gain.setValueAtTime(0.2, now);
+        osc.frequency.setValueAtTime(261.63, now);
+        osc.frequency.setValueAtTime(329.63, now + 0.1);
+        osc.frequency.setValueAtTime(392.00, now + 0.2);
+        osc.frequency.setValueAtTime(523.25, now + 0.3);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+        osc.start(now); osc.stop(now + 0.5);
+      } else if (type === 'super') {
+        const now = audioCtx.currentTime;
+        osc.type = 'sawtooth';
+        gain.gain.setValueAtTime(0.3, now);
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.4);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.6);
+        osc.start(now); osc.stop(now + 0.6);
+      } else if (type === 'hit') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+      } else if (type === 'win') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(600, audioCtx.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+      } else if (type === 'lose') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(100, audioCtx.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') exitToStartScreen();
+    });
+
+    function renderGemsTracker() {
+      const container = document.getElementById('gems-tracker-grid');
+      container.innerHTML = '';
+      GEM_TYPES.forEach(gem => {
+        const isUnlocked = unlockedGems.includes(gem.id);
+        const item = document.createElement('div');
+        item.className = `gem-item ${isUnlocked ? 'unlocked' : ''}`;
+        item.innerHTML = `
+          <div class="gem-icon">${gem.icon}</div>
+          <div class="gem-name">${gem.name}</div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    // RENDERITZAR ELS 4 INSTRUMENTS EN EL HUD DE COMBAT
+    function renderHudGems() {
+      const hudBar = document.getElementById('hud-gems-bar');
+      hudBar.innerHTML = '';
+
+      GEM_TYPES.forEach(gem => {
+        const slot = document.createElement('div');
+        const isUnlocked = unlockedGems.includes(gem.id);
+        const isCurrentTarget = gem.id === selectedGemId;
+
+        slot.className = 'hud-gem-slot';
+        if (isUnlocked) {
+          slot.classList.add('unlocked');
+        } else if (isCurrentTarget) {
+          slot.classList.add('current-target');
+        }
+
+        slot.title = `${gem.name}: ${isUnlocked ? 'Aconseguit' : (isCurrentTarget ? 'En combat actual' : 'Pendent')}`;
+        slot.innerText = gem.icon;
+        hudBar.appendChild(slot);
+      });
+    }
+
+    function resetGemsProgress() {
+      if (confirm("Vols reiniciar el progrés dels 4 instruments?")) {
+        unlockedGems = [];
+        localStorage.setItem('quiz_fighter_gems', JSON.stringify(unlockedGems));
+        renderGemsTracker();
+        renderHudGems();
+      }
+    }
+
+    function applyVisuals() {
+      document.getElementById('name-p1').innerText = selectedPlayerName;
+      document.getElementById('name-p2').innerText = state.p2Name;
+      document.getElementById('char-p1').style.backgroundImage = `url('${selectedPlayerImg}')`;
+      document.getElementById('char-p2').style.backgroundImage = `url('${state.p2Img}')`;
+      document.getElementById('hud-avatar-p1').style.backgroundImage = `url('${selectedPlayerImg}')`;
+      document.getElementById('hud-avatar-p2').style.backgroundImage = `url('${state.p2Img}')`;
+      document.getElementById('game-container').style.backgroundImage = `url('${state.bgImg}')`;
+      
+      renderHudGems();
+    }
+
+    function spawnFloatingText(text, color, isRightSide) {
+      const el = document.createElement('div');
+      el.className = 'floating-text';
+      el.innerText = text;
+      el.style.color = color;
+      el.style.left = isRightSide ? '65%' : '20%';
+      document.getElementById('stage-area').appendChild(el);
+      setTimeout(() => el.remove(), 1400);
+    }
+
+    function openCharSelect() {
+      document.getElementById('start-screen').style.display = 'none';
+      document.getElementById('btn-exit-game').style.display = 'block';
+
+      const gemContainer = document.getElementById('gem-select-container');
+      gemContainer.innerHTML = '';
+
+      let firstAvailableGem = null;
+
+      GEM_TYPES.forEach(gem => {
+        const isUnlocked = unlockedGems.includes(gem.id);
+        const card = document.createElement('div');
+        card.className = `gem-select-card ${isUnlocked ? 'already-unlocked' : ''}`;
+        card.innerHTML = `
+          <div style="font-size: 2rem;">${gem.icon}</div>
+          <div style="font-size: 0.7rem; color: #fff; font-weight: bold;">${gem.name}</div>
+          <div style="font-size: 0.55rem; color: ${isUnlocked ? '#22c55e' : '#ffcc00'};">
+            ${isUnlocked ? 'ACONSEGUIT 🏆' : 'PENDENT 🔒'}
+          </div>
+        `;
+
+        if (!isUnlocked && !firstAvailableGem) {
+          firstAvailableGem = gem.id;
+        }
+
+        if (!isUnlocked) {
+          card.onclick = () => selectGem(gem.id);
+        }
+
+        gemContainer.appendChild(card);
+      });
+
+      selectedGemId = firstAvailableGem || GEM_TYPES[0].id;
+      highlightSelectedGem();
+
+      document.getElementById('select-name-p1a').innerText = state.p1aName;
+      document.getElementById('select-avatar-p1a').style.backgroundImage = `url('${state.p1aImg}')`;
+      document.getElementById('select-name-p1b').innerText = state.p1bName;
+      document.getElementById('select-avatar-p1b').style.backgroundImage = `url('${state.p1bImg}')`;
+
+      selectFighter(1);
+      document.getElementById('char-select-screen').style.display = 'flex';
+    }
+
+    function selectGem(gemId) {
+      selectedGemId = gemId;
+      highlightSelectedGem();
+    }
+
+    function highlightSelectedGem() {
+      const cards = document.querySelectorAll('.gem-select-card');
+      GEM_TYPES.forEach((gem, idx) => {
+        if (cards[idx]) {
+          if (gem.id === selectedGemId) {
+            cards[idx].classList.add('selected');
+          } else {
+            cards[idx].classList.remove('selected');
+          }
+        }
+      });
+    }
+
+    function selectFighter(option) {
+      selectedPlayerOption = option;
+      if (option === 1) {
+        selectedPlayerName = state.p1aName;
+        selectedPlayerImg = state.p1aImg;
+        document.getElementById('card-p1a').classList.add('selected');
+        document.getElementById('card-p1b').classList.remove('selected');
+      } else {
+        selectedPlayerName = state.p1bName;
+        selectedPlayerImg = state.p1bImg;
+        document.getElementById('card-p1b').classList.add('selected');
+        document.getElementById('card-p1a').classList.remove('selected');
+      }
+    }
+
+    function confirmSelectionAndStart() {
+      document.getElementById('char-select-screen').style.display = 'none';
+      startGame();
+    }
+
+    function startGame() {
+      document.getElementById('btn-main-config').style.display = 'none';
+      document.getElementById('btn-exit-game').style.display = 'none';
+      document.getElementById('results-screen').style.display = 'none';
+      
+      applyVisuals();
+
+      hpP1 = 100;
+      hpP2 = 100;
+      comboStreak = 0;
+      maxCombo = 0;
+      countCorrect = 0;
+      countWrong = 0;
+      matchStartTime = Date.now();
+      
+      updateHP();
+      updateComboBadge();
+
+      state.questions.sort(() => Math.random() - 0.5);
+      currentQIndex = 0;
+
+      showQuestion();
+    }
+
+    function exitToStartScreen() {
+      clearInterval(quizTimer);
+      document.getElementById('quiz-modal').style.display = 'none';
+      document.getElementById('pin-modal').style.display = 'none';
+      document.getElementById('config-modal').style.display = 'none';
+      document.getElementById('results-screen').style.display = 'none';
+      document.getElementById('char-select-screen').style.display = 'none';
+      
+      renderGemsTracker();
+      document.getElementById('start-screen').style.display = 'flex';
+      document.getElementById('btn-main-config').style.display = 'block';
+      document.getElementById('btn-exit-game').style.display = 'block';
+    }
+
+    function updateComboBadge() {
+      document.getElementById('combo-count').innerText = `RUA: ${comboStreak}`;
+    }
+
+    function showQuestion() {
+      if (hpP1 <= 0 || hpP2 <= 0) return;
+
+      isProcessingAnswer = false;
+      document.getElementById('feedback-msg').style.display = 'none';
+
+      if (currentQIndex >= state.questions.length) {
+        state.questions.sort(() => Math.random() - 0.5);
+        currentQIndex = 0;
+      }
+
+      const qData = state.questions[currentQIndex];
+      document.getElementById('quiz-question').innerText = qData.q;
+
+      const imgContainer = document.getElementById('quiz-img-container');
+      const qImg = document.getElementById('quiz-question-img');
+      if (qData.img && qData.img.trim() !== "") {
+        qImg.src = qData.img;
+        imgContainer.style.display = 'flex';
+      } else {
+        imgContainer.style.display = 'none';
+        qImg.src = "";
+      }
+
+      const optsContainer = document.getElementById('quiz-options');
+      optsContainer.innerHTML = '';
+
+      const optionsWithIndex = qData.options
+        .map((opt, idx) => ({ text: opt, originalIdx: idx }))
+        .filter(item => item.text && item.text.trim() !== "");
+
+      optionsWithIndex.sort(() => Math.random() - 0.5);
+
+      optionsWithIndex.forEach((item, displayIdx) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.dataset.originalIdx = item.originalIdx;
+        btn.innerHTML = `<span class="option-letter ${letterClasses[displayIdx]}">${letters[displayIdx]}</span> <span>${item.text}</span>`;
+        btn.onclick = () => {
+          if (!isProcessingAnswer) {
+            handleAnswer(item.originalIdx === qData.correct, btn);
+          }
+        };
+        optsContainer.appendChild(btn);
+      });
+
+      document.getElementById('quiz-modal').style.display = 'flex';
+
+      clearInterval(quizTimer);
+      timeLeft = 15;
+      updateTimerBar();
+
+      quizTimer = setInterval(() => {
+        timeLeft -= 0.1;
+        updateTimerBar();
+        if (timeLeft <= 0) {
+          clearInterval(quizTimer);
+          if (!isProcessingAnswer) {
+            handleAnswer(false, null);
+          }
+        }
+      }, 100);
+    }
+
+    function updateTimerBar() {
+      const bar = document.getElementById('quiz-timer-bar');
+      const pct = (timeLeft / 15) * 100;
+      bar.style.width = `${Math.max(0, pct)}%`;
+
+      if (pct < 25) bar.style.backgroundColor = '#ef4444';
+      else if (pct < 50) bar.style.backgroundColor = '#f59e0b';
+      else bar.style.backgroundColor = '#22c55e';
+    }
+
+    function handleAnswer(isCorrect, clickedBtn) {
+      isProcessingAnswer = true;
+      clearInterval(quizTimer);
+
+      const p1El = document.getElementById('char-p1');
+      const p2El = document.getElementById('char-p2');
+      const qData = state.questions[currentQIndex];
+      const buttons = document.querySelectorAll('.option-btn');
+
+      buttons.forEach(btn => {
+        if (parseInt(btn.dataset.originalIdx) === qData.correct) {
+          btn.classList.add('correct-feedback');
+        } else if (btn === clickedBtn) {
+          btn.classList.add('wrong-feedback');
+        }
+      });
+
+      if (!isCorrect) {
+        const feedbackEl = document.getElementById('feedback-msg');
+        feedbackEl.innerText = "❌ RESPOSTA INCORRECTA!";
+        feedbackEl.style.display = 'block';
+      }
+
+      setTimeout(() => {
+        document.getElementById('quiz-modal').style.display = 'none';
+
+        if (isCorrect) {
+          countCorrect++;
+          comboStreak++;
+          if (comboStreak > maxCombo) maxCombo = comboStreak;
+          updateComboBadge();
+
+          const isSuperCombo = comboStreak >= 5;
+          const finalDamage = isSuperCombo ? parseInt(state.damageSuper) : parseInt(state.damageDeal);
+
+          if (isSuperCombo) {
+            playSound('super');
+            p1El.classList.add('super-attack-p1');
+            spawnFloatingText(`⚡ SUPER COMBO x${comboStreak}! -${finalDamage} HP`, '#ffcc00', true);
+          } else {
+            playSound('joyful');
+            p1El.classList.add('attack-p1');
+            spawnFloatingText(`¡ENCERT! -${finalDamage} HP`, '#22c55e', true);
+          }
+
+          setTimeout(() => {
+            p2El.classList.add('hit');
+            hpP2 = Math.max(0, hpP2 - finalDamage);
+            updateHP();
+          }, 500);
+
+          setTimeout(() => {
+            p1El.classList.remove('attack-p1', 'super-attack-p1');
+            p2El.classList.remove('hit');
+            checkEndOrNext();
+          }, 1500);
+
+        } else {
+          countWrong++;
+          comboStreak = 0;
+          updateComboBadge();
+
+          playSound('hit');
+          p2El.classList.add('attack-p2');
+          const dmg = parseInt(state.damageReceive);
+          spawnFloatingText(`¡FALLAT! -${dmg} HP`, '#ef4444', false);
+
+          setTimeout(() => {
+            p1El.classList.add('hit');
+            hpP1 = Math.max(0, hpP1 - dmg);
+            updateHP();
+          }, 500);
+
+          setTimeout(() => {
+            p2El.classList.remove('attack-p2');
+            p1El.classList.remove('hit');
+            checkEndOrNext();
+          }, 1500);
+        }
+      }, isCorrect ? 400 : 1200);
+    }
+
+    function checkEndOrNext() {
+      if (hpP2 <= 0) {
+        playSound('win');
+        showFinalResults(true);
+      } else if (hpP1 <= 0) {
+        playSound('lose');
+        showFinalResults(false);
+      } else {
+        currentQIndex++;
+        setTimeout(showQuestion, 600);
+      }
+    }
+
+    function showFinalResults(isWin) {
+      document.getElementById('btn-exit-game').style.display = 'block';
+      const titleEl = document.getElementById('results-title');
+      const bannerEl = document.getElementById('gem-unlocked-banner');
+      const totalTime = Math.round((Date.now() - matchStartTime) / 1000);
+      const totalQuestions = countCorrect + countWrong;
+      const accuracy = totalQuestions > 0 ? Math.round((countCorrect / totalQuestions) * 100) : 0;
+
+      const activeGem = GEM_TYPES.find(g => g.id === selectedGemId) || GEM_TYPES[0];
+
+      if (isWin) {
+        titleEl.innerText = `🏆 VICTÒRIA DE ${selectedPlayerName}!`;
+        titleEl.className = 'results-title win';
+        
+        triggerWinConfetti();
+
+        if (!unlockedGems.includes(selectedGemId)) {
+          unlockedGems.push(selectedGemId);
+          localStorage.setItem('quiz_fighter_gems', JSON.stringify(unlockedGems));
+        }
+
+        document.getElementById('banner-gem-icon').innerText = activeGem.icon;
+        
+        if (unlockedGems.length === 4) {
+          document.getElementById('banner-gem-text').innerText = `🌟 HAS ACONSEGUIT ELS 4 INSTRUMENTS! COMPLETAT!`;
+          setTimeout(triggerAllGemsSuperCelebration, 300);
+        } else {
+          document.getElementById('banner-gem-text').innerText = `Has aconseguit l'instrument ${activeGem.name}! (${unlockedGems.length}/4)`;
+        }
+        
+        bannerEl.style.display = 'flex';
+      } else {
+        titleEl.innerText = `💀 GAME OVER! ${state.p2Name} T'HA DERROTAT!`;
+        titleEl.className = 'results-title lose';
+        bannerEl.style.display = 'none';
+      }
+
+      document.getElementById('stat-correct').innerText = countCorrect;
+      document.getElementById('stat-wrong').innerText = countWrong;
+      document.getElementById('stat-accuracy').innerText = `${accuracy}%`;
+      document.getElementById('stat-maxcombo').innerText = maxCombo;
+      document.getElementById('stat-time').innerText = `${totalTime}s`;
+
+      document.getElementById('results-screen').style.display = 'flex';
+    }
+
+    function updateHP() {
+      const barP1 = document.getElementById('hp-p1');
+      const barP2 = document.getElementById('hp-p2');
+
+      barP1.style.width = hpP1 + '%';
+      barP2.style.width = hpP2 + '%';
+
+      setBarColor(barP1, hpP1);
+      setBarColor(barP2, hpP2);
+    }
+
+    function setBarColor(bar, hp) {
+      bar.classList.remove('yellow', 'red');
+      if (hp < 30) bar.classList.add('red');
+      else if (hp < 60) bar.classList.add('yellow');
+    }
+
+    function switchTab(tabIdx) {
+      document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+        btn.classList.toggle('active', idx === tabIdx - 1);
+      });
+      document.querySelectorAll('.tab-content').forEach((content, idx) => {
+        content.classList.toggle('active', idx === tabIdx - 1);
+      });
+    }
+
+    // CONTROL D'ACCÉS PER CONTRASEÑA (PIN: 0402)
+    function requestConfigAccessFromStart() {
+      openedFromStartScreen = true;
+      requestConfigAccess();
+    }
+
+    function requestConfigAccess() {
+      clearInterval(quizTimer);
+      document.getElementById('quiz-modal').style.display = 'none';
+      
+      const pinInput = document.getElementById('pin-input');
+      pinInput.value = '';
+      document.getElementById('pin-error').style.display = 'none';
+      document.getElementById('pin-modal').style.display = 'flex';
+      setTimeout(() => pinInput.focus(), 100);
+    }
+
+    function verifyPin() {
+      const pinInput = document.getElementById('pin-input').value;
+      if (pinInput === CONFIG_PIN) {
+        closePinModal();
+        showConfigModal();
+      } else {
+        document.getElementById('pin-error').style.display = 'block';
+        document.getElementById('pin-input').value = '';
+        setTimeout(() => document.getElementById('pin-input').focus(), 100);
+      }
+    }
+
+    function closePinModal() {
+      document.getElementById('pin-modal').style.display = 'none';
+    }
+
+    function showConfigModal() {
+      clearInterval(quizTimer);
+      document.getElementById('quiz-modal').style.display = 'none';
+
+      document.getElementById('cfg-name-p1a').value = state.p1aName;
+      document.getElementById('cfg-img-p1a').value = state.p1aImg;
+      document.getElementById('cfg-name-p1b').value = state.p1bName;
+      document.getElementById('cfg-img-p1b').value = state.p1bImg;
+      document.getElementById('cfg-name-p2').value = state.p2Name;
+      document.getElementById('cfg-img-p2').value = state.p2Img;
+      document.getElementById('cfg-bg-img').value = state.bgImg;
+      document.getElementById('cfg-damage-deal').value = state.damageDeal;
+      document.getElementById('cfg-damage-super').value = state.damageSuper;
+      document.getElementById('cfg-damage-receive').value = state.damageReceive;
+
+      switchTab(1);
+      renderQuestionsList();
+      document.getElementById('config-modal').style.display = 'flex';
+    }
+
+    function closeConfig() {
+      document.getElementById('config-modal').style.display = 'none';
+      if (openedFromStartScreen) {
+        openedFromStartScreen = false;
+        document.getElementById('start-screen').style.display = 'flex';
+      } else if (document.getElementById('start-screen').style.display !== 'flex') {
+        showQuestion();
+      }
+    }
+
+    function exportConfigJson() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "quiz_fighter_config.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function exportStandaloneHtml() {
+      state.p1aName = document.getElementById('cfg-name-p1a').value.trim() || state.p1aName;
+      state.p1aImg = document.getElementById('cfg-img-p1a').value.trim() || state.p1aImg;
+      state.p1bName = document.getElementById('cfg-name-p1b').value.trim() || state.p1bName;
+      state.p1bImg = document.getElementById('cfg-img-p1b').value.trim() || state.p1bImg;
+      state.p2Name = document.getElementById('cfg-name-p2').value.trim() || state.p2Name;
+      state.p2Img = document.getElementById('cfg-img-p2').value.trim() || state.p2Img;
+      state.bgImg = document.getElementById('cfg-bg-img').value.trim() || state.bgImg;
+      state.damageDeal = parseInt(document.getElementById('cfg-damage-deal').value) || state.damageDeal;
+      state.damageSuper = parseInt(document.getElementById('cfg-damage-super').value) || state.damageSuper;
+      state.damageReceive = parseInt(document.getElementById('cfg-damage-receive').value) || state.damageReceive;
+
+      let fullHtml = document.documentElement.outerHTML;
+
+      const newStateString = `const defaultState = ${JSON.stringify(state, null, 2)};`;
+      fullHtml = fullHtml.replace(/const defaultState = \{[\s\S]*?\};/, newStateString);
+
+      fullHtml = fullHtml.replace(
+        /let state = JSON\.parse\(localStorage\.getItem\('quiz_fighter_cfg'\)\) \|\| defaultState;/,
+        `let state = defaultState;`
+      );
+
+      const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.href = url;
+      downloadAnchor.download = "Test-Instruments-Personalitzat.html";
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function importConfigJson(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported && imported.questions) {
+            state = imported;
+            localStorage.setItem('quiz_fighter_cfg', JSON.stringify(state));
+            applyVisuals();
+            openConfig();
+            alert("Configuració carregada correctament des del fitxer!");
+          } else {
+            alert("El format del fitxer JSON no és vàlid.");
+          }
+        } catch (err) {
+          alert("Error al llegir el fitxer JSON.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function uploadImg(event, targetId) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          document.getElementById(targetId).value = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function renderQuestionsList() {
+      const container = document.getElementById('questions-list');
+      container.innerHTML = '';
+      state.questions.forEach((q, idx) => {
+        const validOptsCount = q.options.filter(o => o && o.trim() !== "").length;
+        const hasImgTag = q.img ? ' 🖼️' : '';
+        const div = document.createElement('div');
+        div.className = 'q-item';
+        div.innerHTML = `
+          <span><b>${idx + 1}.</b> ${q.q}${hasImgTag} <i>(${validOptsCount} opcions)</i></span>
+          <button onclick="removeQuestion(${idx})">🗑️ Esborrar</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function addQuestion() {
+      const qText = document.getElementById('new-q-text').value.trim();
+      const qImg = document.getElementById('new-q-img').value.trim();
+      const opt0 = document.getElementById('new-q-opt0').value.trim();
+      const opt1 = document.getElementById('new-q-opt1').value.trim();
+      const opt2 = document.getElementById('new-q-opt2').value.trim();
+      const opt3 = document.getElementById('new-q-opt3').value.trim();
+
+      if (!qText || !opt0 || !opt1) {
+        alert("Com a mínim has d'escriure la pregunta, la resposta A (correcta) i la resposta B (incorrecta).");
+        return;
+      }
+
+      const options = [opt0, opt1];
+      if (opt2) options.push(opt2);
+      if (opt3) options.push(opt3);
+
+      const newQ = {
+        q: qText,
+        options: options,
+        correct: 0
+      };
+      if (qImg) newQ.img = qImg;
+
+      state.questions.push(newQ);
+
+      document.getElementById('new-q-text').value = '';
+      document.getElementById('new-q-img').value = '';
+      document.getElementById('new-q-opt0').value = '';
+      document.getElementById('new-q-opt1').value = '';
+      document.getElementById('new-q-opt2').value = '';
+      document.getElementById('new-q-opt3').value = '';
+
+      renderQuestionsList();
+    }
+
+    function importBulkQuestions() {
+      const rawText = document.getElementById('bulk-import-text').value.trim();
+      if (!rawText) {
+        alert("Enganxa primer un text amb preguntes per poder importar.");
+        return;
+      }
+
+      const blocks = rawText.split(/\n\s*\n/);
+      let countImported = 0;
+
+      blocks.forEach(block => {
+        const lines = block.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        if (lines.length >= 3) {
+          const questionText = lines[0];
+          let imgUrl = "";
+          let rawOptions = [];
+
+          lines.slice(1).forEach(line => {
+            const imgMatch = line.match(/^\[IMG:\s*(.*)\]$/i);
+            if (imgMatch) {
+              imgUrl = imgMatch[1].trim();
+            } else {
+              rawOptions.push(line);
+            }
+          });
+
+          if (rawOptions.length >= 2) {
+            let correctIdx = 0;
+            const cleanOptions = rawOptions.map((optLine, index) => {
+              let clean = optLine;
+              if (clean.startsWith('*')) {
+                correctIdx = index;
+                clean = clean.substring(1).trim();
+              }
+              clean = clean.replace(/^[A-Da-d][\)\.\:\-]\s*/, '');
+              return clean;
+            });
+
+            const correctText = cleanOptions[correctIdx];
+            cleanOptions.splice(correctIdx, 1);
+            cleanOptions.unshift(correctText);
+
+            const qObj = {
+              q: questionText,
+              options: cleanOptions.slice(0, 4),
+              correct: 0
+            };
+            if (imgUrl) qObj.img = imgUrl;
+
+            state.questions.push(qObj);
+            countImported++;
+          }
+        }
+      });
+
+      if (countImported > 0) {
+        alert(`S'han importat ${countImported} preguntes correctament!`);
+        document.getElementById('bulk-import-text').value = '';
+        renderQuestionsList();
+      } else {
+        alert("No s'ha pogut detectar cap format de pregunta vàlid.");
+      }
+    }
+
+    function removeQuestion(idx) {
+      if (state.questions.length <= 1) {
+        alert("Heu de mantenir com a mínim 1 pregunta.");
+        return;
+      }
+      state.questions.splice(idx, 1);
+      renderQuestionsList();
+    }
+
+    function saveConfig() {
+      state.p1aName = document.getElementById('cfg-name-p1a').value.trim() || "RYU";
+      state.p1aImg = document.getElementById('cfg-img-p1a').value.trim() || defaultState.p1aImg;
+      state.p1bName = document.getElementById('cfg-name-p1b').value.trim() || "KEN";
+      state.p1bImg = document.getElementById('cfg-img-p1b').value.trim() || defaultState.p1bImg;
+      state.p2Name = document.getElementById('cfg-name-p2').value.trim() || "SAGAT";
+      state.p2Img = document.getElementById('cfg-img-p2').value.trim() || defaultState.p2Img;
+      state.bgImg = document.getElementById('cfg-bg-img').value.trim() || defaultState.bgImg;
+      state.damageDeal = parseInt(document.getElementById('cfg-damage-deal').value) || 25;
+      state.damageSuper = parseInt(document.getElementById('cfg-damage-super').value) || 50;
+      state.damageReceive = parseInt(document.getElementById('cfg-damage-receive').value) || 20;
+
+      selectedPlayerName = state.p1aName;
+      selectedPlayerImg = state.p1aImg;
+
+      localStorage.setItem('quiz_fighter_cfg', JSON.stringify(state));
+      applyVisuals();
+      closeConfig();
+    }
+
+    window.onload = () => {
+      renderGemsTracker();
+      applyVisuals();
+      updateHP();
+      exitToStartScreen();
+    };
+  </script>
+
+</body></html>
